@@ -6,6 +6,8 @@
 //
 
 import UIKit
+import MLKit
+import MLImage
 
 class ViewController: UIViewController {
     @IBOutlet weak var Nav: UINavigationBar!
@@ -18,9 +20,9 @@ class ViewController: UIViewController {
         picker.delegate = self
         // Do any additional setup after loading the view.
         imageView.image = UIImage(named: "profile")
+        
+        
     }
-    
-   
     
     @IBAction func addAct(_ sender: Any) {
         let alert =  UIAlertController(title: "타이틀", message: "메세지", preferredStyle: .actionSheet)
@@ -42,11 +44,53 @@ class ViewController: UIViewController {
       present(picker, animated: false, completion: nil)
     }
     func openCamera(){
-      picker.sourceType = .camera
-      present(picker, animated: false, completion: nil)
+        //      picker.sourceType = .camera
+        //      present(picker, animated: false, completion: nil)
+        if(UIImagePickerController .isSourceTypeAvailable(.camera)){
+            picker.sourceType = .camera
+            present(picker, animated: false, completion: nil)
+        }
+        else{
+            print("Camera not available")
+        }
     }
-   
+    
+    @IBOutlet weak var resultBox: UITextView!
+    @IBAction func button(_ sender: Any) {
+        guard let image = imageView.image
+        else {
+            return
+        }
+        
+         let options = ImageLabelerOptions()
+         options.confidenceThreshold = 0.7
+         let labeler = ImageLabeler.imageLabeler(options: options)
+        
+        let visionImage = VisionImage(image: image)
+        visionImage.orientation = image.imageOrientation
+        
+        labeler.process(visionImage) { labels, error in
+            guard error == nil, let labels = labels else {
+                print("error")
+                return }
+            labels.forEach { label in
+                print(label)
+                
+            }
+            // Task succeeded.
+            // ...
+        }
+    }
+    
 }
 
 extension ViewController : UIImagePickerControllerDelegate, UINavigationControllerDelegate{
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        if let image = info[UIImagePickerController.InfoKey.originalImage] as? UIImage{
+            imageView.image = image
+            print(info)
+        }
+        dismiss(animated: true, completion: nil)
+        
+    }
 }
